@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Brawl Guess 🎮</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a1a;
+    --surface: #12122a;
+    --surface2: #1a1a38;
+    --accent: #ffcf00;
+    --accent2: #ff6b35;
+    --blue: #4db8ff;
+    --purple: #c97bff;
+    --green: #4eff91;
+    --red: #ff4d6d;
+    --text: #f0f0ff;
+    --muted: #7777aa;
+    --card-bg: #161630;
+    --eliminated-bg: #0a0a1a;
+    --radius: 16px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated star background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(77,184,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(201,123,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(255,207,0,0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen { 
+    display: none; 
+    position: relative; 
+    z-index: 1;
+    min-height: 100vh;
+  }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* ─── LOBBY ─── */
+  #screen-lobby {
+    gap: 32px;
+    padding: 40px 20px;
+  }
+
+  .logo {
+    text-align: center;
+    animation: floatLogo 3s ease-in-out infinite;
+  }
+  @keyframes floatLogo {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .logo h1 {
+    font-family: 'Boogaloo', cursive;
+    font-size: clamp(3rem, 10vw, 6rem);
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 30px rgba(255,207,0,0.4));
+  }
+  .logo p {
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .lobby-cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .lobby-card {
+    background: var(--surface);
+    border: 2px solid var(--surface2);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    flex: 1;
+    min-width: 280px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .lobby-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+
+  .lobby-card h2 {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lobby-card h2 span { font-size: 1.8rem; }
+
+  .input-group { display: flex; flex-direction: column; gap: 8px; }
+  .input-group label { font-size: 0.85rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  input[type="text"] {
+    background: var(--bg);
+    border: 2px solid var(--surface2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  .btn {
+    padding: 14px 24px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #1a0a00;
+    box-shadow: 0 4px 20px rgba(255,207,0,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 4px 32px rgba(255,207,0,0.5); transform: translateY(-2px); }
+  .btn-secondary {
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    color: white;
+    box-shadow: 0 4px 20px rgba(77,184,255,0.3);
+  }
+  .btn-secondary:hover { box-shadow: 0 4px 32px rgba(77,184,255,0.5); transform: translateY(-2px); }
+  .btn-danger {
+    background: linear-gradient(135deg, var(--red), #ff8c42);
+    color: white;
+  }
+  .btn-green {
+    background: linear-gradient(135deg, var(--green), #00c8a0);
+    color: #001a0d;
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 2px solid var(--muted);
+    color: var(--muted);
+  }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .btn-sm { padding: 8px 16px; font-size: 1rem; border-radius: 8px; }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+    min-height: 20px;
+  }
+
+  /* ─── WAITING ROOM ─── */
+  #screen-waiting {
+    gap: 24px;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .waiting-box {
+    background: var(--surface);
+    border: 2px solid var(--surface2);
+    border-radius: var(--radius);
+    padding: 40px;
+    max-width: 480px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+  .room-code {
+    background: var(--bg);
+    border: 2px dashed var(--accent);
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-family: 'Boogaloo', cursive;
+    font-size: 3rem;
+    color: var(--accent);
+    letter-spacing: 8px;
+    cursor: pointer;
+    user-select: all;
+    transition: background 0.2s;
+  }
+  .room-code:hover { background: rgba(255,207,0,0.05); }
+  .pulse-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s ease-in-out infinite;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.6; }
+  }
+  .player-slots {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .player-slot {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 14px 20px;
+    min-width: 140px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .player-slot.empty { color: var(--muted); font-style: italic; }
+  .player-slot .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.2rem;
+    color: #1a0a00;
+    flex-shrink: 0;
+  }
+
+  /* ─── SECRET PICK ─── */
+  #screen-pick {
+    padding: 20px;
+    gap: 20px;
+    align-items: center;
+  }
+  .pick-header {
+    text-align: center;
+    max-width: 600px;
+  }
+  .pick-header h2 {
+    font-family: 'Boogaloo', cursive;
+    font-size: 2rem;
+    color: var(--accent);
+  }
+  .pick-header p { color: var(--muted); margin-top: 6px; }
+
+  .search-bar {
+    width: 100%;
+    max-width: 600px;
+  }
+  .search-bar input {
+    width: 100%;
+    background: var(--surface);
+    border: 2px solid var(--surface2);
+    border-radius: 12px;
+    padding: 14px 20px 14px 48px;
+    font-size: 1rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237777aa' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 16px center;
+  }
+
+  .brawler-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface2) transparent;
+  }
+
+  .brawler-card {
+    background: var(--card-bg);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .brawler-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    background: var(--surface);
+  }
+  .brawler-card.selected {
+    border-color: var(--green);
+    background: rgba(78,255,145,0.08);
+    box-shadow: 0 0 20px rgba(78,255,145,0.2);
+  }
+  .brawler-card img {
+    width: 54px; height: 54px;
+    object-fit: contain;
+    border-radius: 8px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+  }
+  .brawler-card .bname {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text);
+    line-height: 1.2;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .brawler-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 18px; height: 18px;
+    background: var(--green);
+    border-radius: 50%;
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    color: #001a0d;
+    font-weight: 900;
+  }
+
+  .pick-confirm {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .selected-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-weight: 700;
+  }
+  .selected-preview img {
+    width: 40px; height: 40px;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+
+  /* ─── GAME SCREEN ─── */
+  #screen-game {
+    padding: 0;
+    display: grid !important;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .game-topbar {
+    background: var(--surface);
+    border-bottom: 2px solid var(--surface2);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .turn-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.1rem;
+  }
+  .turn-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    transition: all 0.3s;
+  }
+  .turn-badge.my-turn {
+    background: linear-gradient(135deg, var(--green), #00c8a0);
+    color: #001a0d;
+    animation: turnGlow 1.5s ease-in-out infinite;
+  }
+  .turn-badge.their-turn {
+    background: var(--surface2);
+    color: var(--muted);
+  }
+  @keyframes turnGlow {
+    0%,100% { box-shadow: 0 0 12px rgba(78,255,145,0.4); }
+    50% { box-shadow: 0 0 24px rgba(78,255,145,0.7); }
+  }
+  .my-secret {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .my-secret img { width: 32px; height: 32px; object-fit: contain; border-radius: 6px; }
+  .secret-hidden { filter: blur(6px); transition: filter 0.3s; }
+  .secret-hidden:hover { filter: blur(0); }
+
+  .game-main {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  /* Board */
+  .board-area {
+    padding: 16px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface2) transparent;
+  }
+  .board-area h3 {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 8px;
+  }
+  .board-brawler {
+    background: var(--card-bg);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .board-brawler:hover:not(.out) {
+    border-color: var(--red);
+    transform: scale(1.05);
+  }
+  .board-brawler.out {
+    opacity: 0.22;
+    cursor: default;
+    filter: grayscale(1);
+  }
+  .board-brawler.out::after {
+    content: '✕';
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    color: var(--red);
+    font-weight: 900;
+    background: rgba(10,10,26,0.5);
+    border-radius: 8px;
+  }
+  .board-brawler img {
+    width: 48px; height: 48px;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .board-brawler .bname {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+  }
+  .board-brawler.guess-candidate {
+    border-color: var(--accent);
+    animation: candidateGlow 1.5s ease-in-out infinite;
+  }
+  @keyframes candidateGlow {
+    0%,100% { box-shadow: 0 0 8px rgba(255,207,0,0.3); }
+    50% { box-shadow: 0 0 20px rgba(255,207,0,0.7); }
+  }
+
+  /* Chat / actions sidebar */
+  .sidebar {
+    background: var(--surface);
+    border-left: 2px solid var(--surface2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--surface2);
+  }
+  .tab {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Boogaloo', cursive;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+    margin-bottom: -2px;
+  }
+  .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .tab-content.active { display: flex; }
+
+  /* Log */
+  .game-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface2) transparent;
+  }
+  .log-entry {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .log-question {
+    background: rgba(77,184,255,0.1);
+    border-left: 3px solid var(--blue);
+  }
+  .log-answer {
+    background: rgba(78,255,145,0.08);
+    border-left: 3px solid var(--green);
+  }
+  .log-system {
+    background: rgba(255,207,0,0.06);
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.8rem;
+  }
+  .log-name { font-weight: 900; color: var(--blue); }
+
+  /* Actions */
+  .actions-panel {
+    flex: 1;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+  }
+  .action-section { display: flex; flex-direction: column; gap: 8px; }
+  .action-section label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .action-section textarea {
+    background: var(--bg);
+    border: 2px solid var(--surface2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    resize: none;
+    outline: none;
+    height: 70px;
+    transition: border-color 0.2s;
+  }
+  .action-section textarea:focus { border-color: var(--blue); }
+
+  .answer-buttons { display: flex; gap: 8px; }
+  .btn-yes {
+    flex: 1;
+    background: linear-gradient(135deg, var(--green), #00c8a0);
+    color: #001a0d;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.3rem;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-no {
+    flex: 1;
+    background: linear-gradient(135deg, var(--red), #ff8c42);
+    color: white;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.3rem;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-yes:hover, .btn-no:hover { transform: scale(1.04); }
+  .btn-yes:disabled, .btn-no:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  .divider { height: 1px; background: var(--surface2); }
+
+  .guess-mode-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #1a0a00;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .guess-mode-btn:hover { transform: scale(1.02); box-shadow: 0 4px 20px rgba(255,207,0,0.4); }
+  .guess-mode-btn.active {
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    color: white;
+  }
+
+  .waiting-answer {
+    background: rgba(77,184,255,0.07);
+    border: 2px dashed var(--blue);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+  }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--surface2);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .disabled-overlay {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* ─── GAME OVER ─── */
+  #screen-gameover {
+    gap: 24px;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .gameover-box {
+    background: var(--surface);
+    border: 2px solid var(--surface2);
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 480px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .gameover-emoji { font-size: 5rem; animation: bounceIn 0.6s ease; }
+  @keyframes bounceIn {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  .gameover-title {
+    font-family: 'Boogaloo', cursive;
+    font-size: 2.5rem;
+  }
+  .gameover-title.win { color: var(--green); }
+  .gameover-title.lose { color: var(--red); }
+  .reveal-card {
+    background: var(--surface2);
+    border-radius: 16px;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .reveal-card img { width: 64px; height: 64px; object-fit: contain; border-radius: 10px; }
+  .gameover-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    #screen-game {
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+    }
+    .game-main {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto;
+    }
+    .sidebar {
+      border-left: none;
+      border-top: 2px solid var(--surface2);
+      max-height: 280px;
+    }
+    .board-grid {
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+    .board-brawler img { width: 40px; height: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOBBY -->
+<div id="screen-lobby" class="screen active">
+  <div class="logo">
+    <h1>🎮 Brawl Guess</h1>
+    <p>Adivina al Brawler</p>
+  </div>
+  <div class="lobby-cards">
+    <div class="lobby-card">
+      <h2><span>🏠</span> Crear Sala</h2>
+      <div class="input-group">
+        <label>Tu nombre</label>
+        <input type="text" id="create-name" placeholder="Ej: El Pro" maxlength="20"/>
+      </div>
+      <button class="btn btn-primary" onclick="createRoom()">Crear Sala</button>
+    </div>
+    <div class="lobby-card">
+      <h2><span>🔗</span> Unirse</h2>
+      <div class="input-group">
+        <label>Tu nombre</label>
+        <input type="text" id="join-name" placeholder="Ej: El Hermano" maxlength="20"/>
+      </div>
+      <div class="input-group">
+        <label>Código de sala</label>
+        <input type="text" id="join-code" placeholder="ABC123" maxlength="6" style="text-transform:uppercase; letter-spacing:4px; font-family:'Boogaloo',cursive; font-size:1.4rem;"/>
+      </div>
+      <button class="btn btn-secondary" onclick="joinRoom()">Unirse</button>
+    </div>
+  </div>
+  <p class="error-msg" id="lobby-error"></p>
+</div>
+
+<!-- WAITING ROOM -->
+<div id="screen-waiting" class="screen">
+  <div class="waiting-box">
+    <h2 style="font-family:'Boogaloo',cursive; font-size:1.8rem; color:var(--accent)">🎲 Sala Creada</h2>
+    <p style="color:var(--muted)">Comparte este código con tu rival</p>
+    <div class="room-code" id="room-code-display" onclick="copyRoomCode()" title="Clic para copiar">—</div>
+    <p style="font-size:0.85rem; color:var(--muted)">📋 Clic para copiar</p>
+    <div class="player-slots" id="player-slots">
+      <div class="player-slot"><span class="avatar">?</span> <span>Esperando...</span></div>
+    </div>
+    <div id="waiting-status" style="color:var(--muted); font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+      <span class="pulse-dot"></span> Esperando al segundo jugador...
+    </div>
+  </div>
+</div>
+
+<!-- PICK SECRET BRAWLER -->
+<div id="screen-pick" class="screen">
+  <div class="pick-header">
+    <h2>🤫 Elige tu Brawler Secreto</h2>
+    <p id="pick-subtitle">Tu rival intentará adivinar quién es. ¡No lo digas!</p>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="pick-search" placeholder="Buscar brawler..." oninput="filterPickGrid()"/>
+  </div>
+  <div class="brawler-grid" id="pick-grid">
+    <div style="color:var(--muted); grid-column:1/-1; text-align:center; padding:40px;">Cargando brawlers... ⏳</div>
+  </div>
+  <div class="pick-confirm" id="pick-confirm" style="display:none;">
+    <div class="selected-preview" id="selected-preview"></div>
+    <button class="btn btn-green" onclick="confirmSecret()">¡Listo! 🔒</button>
+  </div>
+  <p id="pick-waiting" style="color:var(--muted); display:none;">✅ ¡Elegiste! Esperando al otro jugador...</p>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen">
+  <!-- Topbar -->
+  <div class="game-topbar">
+    <div class="turn-indicator">
+      <div class="turn-badge" id="turn-badge">–</div>
+      <span id="turn-text" style="font-size:0.9rem; color:var(--muted)">esperando...</span>
+    </div>
+    <div class="my-secret" id="my-secret-display" title="Mantén en hover para ver">
+      <span style="font-size:0.8rem; color:var(--muted)">Mi secreto:</span>
+      <img id="secret-img" src="" alt=""/>
+      <span id="secret-name" class="secret-hidden" style="font-size:0.85rem;">???</span>
+    </div>
+    <div id="question-counter" style="font-size:0.85rem; color:var(--muted);">❓ 0 preguntas</div>
+  </div>
+
+  <!-- Main -->
+  <div class="game-main">
+    <!-- Board -->
+    <div class="board-area">
+      <h3>🎯 Tablero — <span id="remaining-count">0</span> brawlers activos <span id="guess-mode-hint" style="color:var(--accent); display:none;">• Modo Adivinar: clic en el brawler</span></h3>
+      <div class="board-grid" id="board-grid"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-tabs">
+        <button class="tab active" onclick="switchTab('actions')">Acciones</button>
+        <button class="tab" onclick="switchTab('log')">Historial</button>
+      </div>
+
+      <!-- Actions Tab -->
+      <div class="tab-content active" id="tab-actions">
+        <div class="actions-panel" id="actions-panel">
+
+          <!-- My turn: ask question -->
+          <div class="action-section" id="ask-section">
+            <label>Hacer pregunta</label>
+            <textarea id="question-input" placeholder="¿Tu brawler es masculino?&#10;¿Tiene Super de área?&#10;¿Lo usa gente tóxica?"></textarea>
+            <button class="btn btn-secondary btn-sm" onclick="sendQuestion()">Preguntar 📢</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- My turn: guess -->
+          <div class="action-section">
+            <label>¿Ya sabes quién es?</label>
+            <button class="guess-mode-btn" id="guess-mode-btn" onclick="toggleGuessMode()">
+              🎯 Adivinar brawler
+            </button>
+            <p style="font-size:0.75rem; color:var(--muted); text-align:center;" id="guess-hint">Activa el modo y clic en el tablero</p>
+          </div>
+
+          <!-- Their turn: answer -->
+          <div class="action-section" id="answer-section" style="display:none;">
+            <label>Responder pregunta</label>
+            <div id="pending-question" style="background:var(--surface2); border-radius:10px; padding:12px; font-size:0.9rem; margin-bottom:4px; min-height:40px;"></div>
+            <div class="answer-buttons">
+              <button class="btn-yes" id="btn-yes" onclick="sendAnswer('Sí ✅')" disabled>Sí ✅</button>
+              <button class="btn-no" id="btn-no" onclick="sendAnswer('No ❌')" disabled>No ❌</button>
+            </div>
+          </div>
+
+          <!-- Waiting state -->
+          <div class="waiting-answer" id="waiting-answer" style="display:none;">
+            <div class="spinner"></div>
+            <span>Esperando respuesta...</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Log Tab -->
+      <div class="tab-content" id="tab-log">
+        <div class="game-log" id="game-log">
+          <div class="log-entry log-system">¡El juego comenzó! Haz preguntas de Sí/No para adivinar el brawler secreto de tu rival. 🎮</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="screen-gameover" class="screen">
+  <div class="gameover-box" id="gameover-box">
+    <div class="gameover-emoji" id="gameover-emoji">🎉</div>
+    <div class="gameover-title" id="gameover-title">¡Ganaste!</div>
+    <p id="gameover-subtitle" style="color:var(--muted);"></p>
+    <div class="reveal-card" id="reveal-card">
+      <img id="reveal-img" src="" alt=""/>
+      <div>
+        <div style="font-size:0.8rem; color:var(--muted); font-weight:600;">El brawler secreto era</div>
+        <div id="reveal-name" style="font-size:1.3rem;"></div>
+      </div>
+    </div>
+    <div class="gameover-actions">
+      <button class="btn btn-primary" onclick="requestRematch()">🔄 Revancha</button>
+      <button class="btn btn-ghost" onclick="goHome()">🏠 Inicio</button>
+    </div>
+    <p id="rematch-status" style="color:var(--muted); font-size:0.85rem; min-height:18px;"></p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ─── State ───
+const socket = io();
+let myRole = null;
+let mySocketId = null;
+let roomId = null;
+let allBrawlers = [];
+let selectedBrawler = null;
+let mySecretBrawler = null;
+let isMyTurn = false;
+let guessMode = false;
+let eliminatedIds = new Set();
+let questionCount = 0;
+let pendingQuestion = null;
+let playersMap = {}; // id -> {name, role}
+
+// ─── Screens ───
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ─── Toast ───
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ─── Lobby ───
+function createRoom() {
+  const name = document.getElementById('create-name').value.trim() || 'Jugador 1';
+  socket.emit('create_room', { playerName: name });
+}
+
+function joinRoom() {
+  const name = document.getElementById('join-name').value.trim() || 'Jugador 2';
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!code) { setLobbyError('Ingresa el código de sala'); return; }
+  socket.emit('join_room', { roomId: code, playerName: name });
+}
+
+function setLobbyError(msg) {
+  document.getElementById('lobby-error').textContent = msg;
+  setTimeout(() => document.getElementById('lobby-error').textContent = '', 3000);
+}
+
+function copyRoomCode() {
+  navigator.clipboard.writeText(roomId).then(() => showToast('✅ Código copiado!'));
+}
+
+// ─── Brawler loading ───
+async function loadBrawlers() {
+  try {
+    const res = await fetch('https://api.brawlapi.com/v1/brawlers');
+    const data = await res.json();
+    allBrawlers = data.list.sort((a, b) => a.name.localeCompare(b.name));
+    renderPickGrid(allBrawlers);
+    renderBoard(allBrawlers);
+  } catch (e) {
+    document.getElementById('pick-grid').innerHTML = '<p style="color:var(--red);grid-column:1/-1;text-align:center;">Error cargando brawlers 😢</p>';
+  }
+}
+
+// ─── Pick Screen ───
+function renderPickGrid(brawlers) {
+  const grid = document.getElementById('pick-grid');
+  grid.innerHTML = brawlers.map(b => `
+    <div class="brawler-card" id="pick-${b.id}" onclick="selectBrawler(${b.id}, '${escapeName(b.name)}', '${b.imageUrl2||b.imageUrl}')">
+      <img src="${b.imageUrl2||b.imageUrl}" alt="${b.name}" loading="lazy" onerror="this.src='https://cdn.brawlify.com/brawler/regular/default.png'"/>
+      <span class="bname">${b.name}</span>
+    </div>
+  `).join('');
+}
+
+function filterPickGrid() {
+  const q = document.getElementById('pick-search').value.toLowerCase();
+  const filtered = allBrawlers.filter(b => b.name.toLowerCase().includes(q));
+  renderPickGrid(filtered);
+  if (selectedBrawler) {
+    const el = document.getElementById(`pick-${selectedBrawler.id}`);
+    if (el) el.classList.add('selected');
+  }
+}
+
+function escapeName(n) { return n.replace(/'/g, "\\'"); }
+
+function selectBrawler(id, name, image) {
+  document.querySelectorAll('.brawler-card').forEach(c => c.classList.remove('selected'));
+  const el = document.getElementById(`pick-${id}`);
+  if (el) el.classList.add('selected');
+  selectedBrawler = { id, name, image };
+  const confirm = document.getElementById('pick-confirm');
+  confirm.style.display = 'flex';
+  document.getElementById('selected-preview').innerHTML = `
+    <img src="${image}" alt="${name}" onerror="this.src='https://cdn.brawlify.com/brawler/regular/default.png'"/>
+    <span>${name}</span>
+  `;
+}
+
+function confirmSecret() {
+  if (!selectedBrawler) return;
+  mySecretBrawler = selectedBrawler;
+  socket.emit('set_secret', {
+    brawlerId: selectedBrawler.id,
+    brawlerName: selectedBrawler.name,
+    brawlerImage: selectedBrawler.image
+  });
+  document.getElementById('pick-confirm').style.display = 'none';
+  document.getElementById('pick-waiting').style.display = 'block';
+  document.querySelectorAll('.brawler-card').forEach(c => c.style.pointerEvents = 'none');
+  document.getElementById('pick-search').disabled = true;
+}
+
+// ─── Board ───
+function renderBoard(brawlers) {
+  const grid = document.getElementById('board-grid');
+  grid.innerHTML = brawlers.map(b => `
+    <div class="board-brawler" id="board-${b.id}" onclick="handleBoardClick(${b.id}, '${escapeName(b.name)}')" title="${b.name}">
+      <img src="${b.imageUrl2||b.imageUrl}" alt="${b.name}" loading="lazy" onerror="this.src='https://cdn.brawlify.com/brawler/regular/default.png'"/>
+      <span class="bname">${b.name}</span>
+    </div>
+  `).join('');
+  updateRemainingCount();
+}
+
+function handleBoardClick(id, name) {
+  if (guessMode && isMyTurn) {
+    if (confirm(`¿Adivinas que el brawler secreto de tu rival es ${name}?`)) {
+      socket.emit('make_guess', { brawlerId: id, brawlerName: name });
+      toggleGuessMode();
+    }
+    return;
+  }
+  // Eliminate
+  const el = document.getElementById(`board-${id}`);
+  if (!el || el.classList.contains('out')) return;
+  el.classList.add('out');
+  eliminatedIds.add(id);
+  socket.emit('eliminate_brawler', { brawlerId: id });
+  updateRemainingCount();
+}
+
+function updateRemainingCount() {
+  const total = allBrawlers.length;
+  const remaining = total - eliminatedIds.size;
+  document.getElementById('remaining-count').textContent = remaining;
+}
+
+function toggleGuessMode() {
+  guessMode = !guessMode;
+  const btn = document.getElementById('guess-mode-btn');
+  const hint = document.getElementById('guess-mode-hint');
+  if (guessMode) {
+    btn.classList.add('active');
+    btn.textContent = '❌ Cancelar adivinanza';
+    hint.style.display = 'inline';
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = '🎯 Adivinar brawler';
+    hint.style.display = 'none';
+  }
+}
+
+// ─── Turn management ───
+function updateTurnUI() {
+  const badge = document.getElementById('turn-badge');
+  const text = document.getElementById('turn-text');
+  const askSection = document.getElementById('ask-section');
+  const answerSection = document.getElementById('answer-section');
+  const waitingAnswer = document.getElementById('waiting-answer');
+  const guessModeBtn = document.getElementById('guess-mode-btn');
+
+  if (isMyTurn) {
+    badge.className = 'turn-badge my-turn';
+    badge.textContent = '🟢 Tu turno';
+    text.textContent = 'Haz una pregunta o adivina';
+    askSection.style.display = 'flex';
+    answerSection.style.display = 'none';
+    waitingAnswer.style.display = 'none';
+    guessModeBtn.disabled = false;
+  } else {
+    badge.className = 'turn-badge their-turn';
+    badge.textContent = '⏳ Su turno';
+    text.textContent = 'Espera a que pregunte';
+    askSection.style.display = 'none';
+    answerSection.style.display = 'none';
+    waitingAnswer.style.display = 'none';
+    guessModeBtn.disabled = true;
+    if (guessMode) toggleGuessMode();
+  }
+}
+
+// ─── Question / Answer ───
+function sendQuestion() {
+  if (!isMyTurn) return;
+  const q = document.getElementById('question-input').value.trim();
+  if (!q) { showToast('Escribe una pregunta primero 💬'); return; }
+  socket.emit('ask_question', { question: q });
+  document.getElementById('question-input').value = '';
+  // Show waiting
+  document.getElementById('ask-section').style.display = 'none';
+  document.getElementById('waiting-answer').style.display = 'flex';
+}
+
+function sendAnswer(answer) {
+  socket.emit('answer_question', { answer });
+  document.getElementById('answer-section').style.display = 'none';
+  pendingQuestion = null;
+}
+
+// ─── Game Log ───
+function addLog(html, type = 'system') {
+  const log = document.getElementById('game-log');
+  const div = document.createElement('div');
+  div.className = `log-entry log-${type}`;
+  div.innerHTML = html;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ─── Tabs ───
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// ─── Rematch / Home ───
+function requestRematch() {
+  socket.emit('request_rematch');
+  document.getElementById('rematch-status').textContent = '⏳ Esperando respuesta del rival...';
+}
+function goHome() {
+  location.reload();
+}
+
+// ─── Socket Events ───
+socket.on('connect', () => { mySocketId = socket.id; });
+
+socket.on('room_created', ({ roomId: rid, role }) => {
+  roomId = rid;
+  myRole = role;
+  document.getElementById('room-code-display').textContent = rid;
+  const slots = document.getElementById('player-slots');
+  const name = document.getElementById('create-name').value.trim() || 'Jugador 1';
+  slots.innerHTML = `
+    <div class="player-slot"><span class="avatar">${name[0].toUpperCase()}</span><span>${name} 👑</span></div>
+    <div class="player-slot empty"><span>⏳</span><span>Esperando...</span></div>
+  `;
+  showScreen('screen-waiting');
+  loadBrawlers();
+});
+
+socket.on('room_joined', ({ roomId: rid, role, players }) => {
+  roomId = rid;
+  myRole = role;
+  showScreen('screen-pick');
+  loadBrawlers();
+});
+
+socket.on('player_joined', ({ name, players }) => {
+  const myName = document.getElementById('create-name').value.trim() || 'Jugador 1';
+  const slots = document.getElementById('player-slots');
+  slots.innerHTML = `
+    <div class="player-slot"><span class="avatar">${myName[0].toUpperCase()}</span><span>${myName} 👑</span></div>
+    <div class="player-slot"><span class="avatar">${name[0].toUpperCase()}</span><span>${name}</span></div>
+  `;
+  document.getElementById('waiting-status').innerHTML = '✅ ¡Rival conectado! Selecciona tu brawler secreto...';
+  showToast(`🎮 ${name} se unió!`);
+  setTimeout(() => showScreen('screen-pick'), 1200);
+});
+
+socket.on('opponent_ready', () => {
+  showToast('✅ Tu rival ya eligió su brawler secreto');
+});
+
+socket.on('game_start', ({ currentTurn, players }) => {
+  playersMap = players;
+  isMyTurn = (currentTurn === mySocketId);
+
+  // Setup secret display
+  const si = document.getElementById('secret-img');
+  const sn = document.getElementById('secret-name');
+  if (mySecretBrawler) {
+    si.src = mySecretBrawler.image;
+    sn.textContent = mySecretBrawler.name;
+  }
+
+  showScreen('screen-game');
+  updateTurnUI();
+  addLog(`🎮 ¡El juego comenzó! ${isMyTurn ? 'Empiezas tú 🟢' : 'Empieza tu rival ⏳'}`, 'system');
+});
+
+socket.on('question_asked', ({ from, fromName, question }) => {
+  questionCount++;
+  document.getElementById('question-counter').textContent = `❓ ${questionCount} preguntas`;
+  addLog(`<span class="log-name">${fromName}</span> pregunta: <strong>${question}</strong>`, 'question');
+  switchTab('log'); // Auto-switch to log
+
+  if (from !== mySocketId) {
+    // I need to answer
+    document.getElementById('pending-question').textContent = question;
+    document.getElementById('ask-section').style.display = 'none';
+    document.getElementById('answer-section').style.display = 'flex';
+    document.getElementById('btn-yes').disabled = false;
+    document.getElementById('btn-no').disabled = false;
+    // Switch to actions
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab').classList.add('active');
+    document.getElementById('tab-actions').classList.add('active');
+    showToast('💬 Tu rival hizo una pregunta, responde!');
+  }
+});
+
+socket.on('question_answered', ({ from, fromName, answer }) => {
+  addLog(`<span class="log-name">${fromName}</span> responde: <strong style="color:${answer.includes('Sí')?'var(--green)':'var(--red)'}">${answer}</strong>`, 'answer');
+});
+
+socket.on('turn_changed', ({ currentTurn }) => {
+  isMyTurn = (currentTurn === mySocketId);
+  updateTurnUI();
+  if (isMyTurn) {
+    showToast('🟢 ¡Es tu turno!');
+    // Switch back to actions
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab').classList.add('active');
+    document.getElementById('tab-actions').classList.add('active');
+  }
+});
+
+socket.on('elimination_confirmed', ({ brawlerId }) => {
+  // Already handled locally
+});
+
+socket.on('game_over', ({ winnerId, winnerName, secretBrawler, wrongGuess }) => {
+  const iWon = winnerId === mySocketId;
+  document.getElementById('gameover-emoji').textContent = iWon ? '🏆' : '💀';
+  const title = document.getElementById('gameover-title');
+  title.textContent = iWon ? '¡Ganaste!' : '¡Perdiste!';
+  title.className = `gameover-title ${iWon ? 'win' : 'lose'}`;
+  document.getElementById('gameover-subtitle').textContent = iWon
+    ? `¡Adivinaste al brawler secreto de ${winnerName === (playersMap[mySocketId]?.name) ? 'tu rival' : winnerName}!`
+    : wrongGuess
+      ? `Intentaste adivinar ${wrongGuess.brawlerName} pero era otro 😅`
+      : `${winnerName} adivinó tu brawler secreto 😱`;
+  if (secretBrawler) {
+    document.getElementById('reveal-img').src = secretBrawler.image;
+    document.getElementById('reveal-name').textContent = secretBrawler.name;
+  }
+  showScreen('screen-gameover');
+});
+
+socket.on('rematch_requested', ({ fromName }) => {
+  document.getElementById('rematch-status').textContent = `⏳ ${fromName} quiere revancha...`;
+  showToast(`🔄 ${fromName} quiere revancha!`);
+});
+
+socket.on('rematch_start', () => {
+  eliminatedIds.clear();
+  questionCount = 0;
+  guessMode = false;
+  selectedBrawler = null;
+  mySecretBrawler = null;
+  pendingQuestion = null;
+  document.getElementById('game-log').innerHTML = '';
+  document.getElementById('pick-waiting').style.display = 'none';
+  document.getElementById('pick-search').value = '';
+  document.getElementById('pick-search').disabled = false;
+  document.querySelectorAll('.brawler-card').forEach(c => {
+    c.style.pointerEvents = '';
+    c.classList.remove('selected');
+  });
+  document.getElementById('pick-confirm').style.display = 'none';
+  document.getElementById('question-counter').textContent = '❓ 0 preguntas';
+  document.getElementById('rematch-status').textContent = '';
+  // Re-render board
+  renderBoard(allBrawlers);
+  showScreen('screen-pick');
+  showToast('🔄 ¡Revancha! Elige tu nuevo brawler');
+});
+
+socket.on('opponent_disconnected', () => {
+  showToast('😢 Tu rival se desconectó', 4000);
+  setTimeout(goHome, 4000);
+});
+
+socket.on('error', ({ message }) => {
+  setLobbyError(message);
+  showToast('❌ ' + message);
+});
+
+// Enter key shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const active = document.querySelector('.screen.active');
+    if (active.id === 'screen-lobby') {
+      const code = document.getElementById('join-code').value;
+      code ? joinRoom() : createRoom();
+    }
+  }
+});
+
+// Auto uppercase join code
+document.getElementById('join-code').addEventListener('input', function() {
+  this.value = this.value.toUpperCase();
+});
+</script>
+</body>
+</html>
